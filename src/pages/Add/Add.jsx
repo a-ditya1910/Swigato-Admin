@@ -1,125 +1,112 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { toast } from "react-toastify";
-import { assets } from "../../assets/assets";
 
-const Add = ({ url }) => {
-  const [image, setImage] = useState(false);
-  const [data, setData] = useState({
+const Add = () => {
+  const [form, setForm] = useState({
     name: "",
     description: "",
     price: "",
-    category: "Salad",
+    category: "",
   });
+  const [image, setImage] = useState(null);
+  const [message, setMessage] = useState("");
 
-  const onChangeHandler = (e) => {
-    const name = e.target.name;
-    const value = e.target.value;
-
-    setData((data) => ({ ...data, [name]: value }));
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const onSubmitHandler = async (e) => {
+  const handleFileChange = (e) => {
+    setImage(e.target.files[0]);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!data.name || !data.description || !data.price || !image) {
-      toast.error("Please fill out all fields and upload an image.");
+    if (!image) {
+      setMessage("Image is required");
       return;
     }
 
     const formData = new FormData();
-    formData.append("name", data.name);
-    formData.append("description", data.description);
-    formData.append("price", Number(data.price));
-    formData.append("category", data.category);
+    formData.append("name", form.name);
+    formData.append("description", form.description);
+    formData.append("price", form.price);
+    formData.append("category", form.category);
     formData.append("image", image);
 
     try {
-      const response = await axios.post(`${url}/api/food/add`, formData);
+      const res = await axios.post("http://localhost:4000/api/food/add", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-      if (response.data.success) {
-        setData({
-          name: "",
-          description: "",
-          price: "",
-          category: "Salad",
-        });
-        setImage(false);
-        toast.success(response.data.message);
-      } 
-      else {
-        toast.error(response.data.message);
-      }
-    } 
-    catch (error) {
-      toast.error("An error occurred while adding the product.");
-      console.error(error);
+      setMessage(res.data.message || "Upload successful");
+      setForm({ name: "", description: "", price: "", category: "" });
+      setImage(null);
+    } catch (err) {
+      console.error("Upload error:", err);
+      setMessage(err?.response?.data?.error || "Upload failed");
     }
   };
 
   return (
-    <div className="add max-w-4xl mx-auto mt-8 px-4 mb-12">
-      <form className="space-y-6" onSubmit={onSubmitHandler}>
-        {/* Image Upload Section */}
-        <div className="add-img-upload flex flex-col items-center space-y-2">
-          <p className="text-lg font-semibold">Upload Image</p>
-          <label htmlFor="image" className="cursor-pointer">
-            <img
-              src={image ? URL.createObjectURL(image) : assets.upload_area}
-              alt="Upload"
-              className="w-32 h-32 object-cover border-2 border-gray-300 rounded"
-            />
-          </label>
+    <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">
+      <h2 className="text-2xl font-semibold mb-6 text-center">Add New Food</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Name */}
+        <div>
+          <label className="block mb-1 font-medium">Product Name</label>
           <input
-            onChange={(e) => setImage(e.target.files[0])}
-            type="file"
-            id="image"
-            hidden
-            required
-          />
-        </div>
-
-        {/* Product Name Section */}
-        <div className="add-product-name flex flex-col space-y-2">
-          <label htmlFor="name" className="text-lg font-semibold">Product name</label>
-          <input
-            onChange={onChangeHandler}
-            value={data.name}
             type="text"
             name="name"
-            placeholder="Type here"
-            id="name"
-            className="px-4 py-2 border border-gray-300 rounded-md"
+            value={form.name}
+            onChange={handleChange}
+            required
+            placeholder="e.g. Margherita Pizza"
+            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        {/* Product Description Section */}
-        <div className="add-product-description flex flex-col space-y-2">
-          <label htmlFor="description" className="text-lg font-semibold">Product description</label>
+        {/* Description */}
+        <div>
+          <label className="block mb-1 font-medium">Description</label>
           <textarea
-            onChange={onChangeHandler}
-            value={data.description}
             name="description"
-            id="description"
-            rows="6"
-            placeholder="Write content here"
+            value={form.description}
+            onChange={handleChange}
             required
-            className="px-4 py-2 border border-gray-300 rounded-md"
-          ></textarea>
+            rows={4}
+            placeholder="e.g. A delicious cheesy pizza..."
+            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
 
-        {/* Category and Price Section */}
-        <div className="add-category-price flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-          {/* Category */}
-          <div className="add-category flex flex-col space-y-2 w-full sm:w-1/2">
-            <label htmlFor="category" className="text-lg font-semibold">Product Category</label>
+        {/* Price and Category */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="w-full">
+            <label className="block mb-1 font-medium">Price (₹)</label>
+            <input
+              type="number"
+              name="price"
+              value={form.price}
+              onChange={handleChange}
+              required
+              min="1"
+              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="w-full">
+            <label className="block mb-1 font-medium">Category</label>
             <select
-              onChange={onChangeHandler}
               name="category"
-              id="category"
-              className="px-4 py-2 border border-gray-300 rounded-md"
+              value={form.category}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="Salad">Pizza</option>
+              <option value="">Select Category</option>
+              <option value="Pizza">Pizza</option>
               <option value="Rolls">Rolls</option>
               <option value="Deserts">Deserts</option>
               <option value="Sandwich">Sandwich</option>
@@ -130,31 +117,45 @@ const Add = ({ url }) => {
               <option value="Non Veg">Non Veg</option>
             </select>
           </div>
-
-          {/* Price */}
-          <div className="add-price flex flex-col space-y-2 w-full sm:w-1/2">
-            <label htmlFor="price" className="text-lg font-semibold">Product Price</label>
-            <input
-              onChange={onChangeHandler}
-              value={data.price}
-              type="number"
-              name="price"
-              id="price"
-              placeholder="₹20"
-              min="0"
-              className="px-4 py-2 border border-gray-300 rounded-md"
-            />
-          </div>
         </div>
 
-        {/* Submit Button */}
+        {/* Image Upload */}
+        <div>
+          <label className="block mb-2 font-medium">Upload Image</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            required
+            className="block w-full text-sm text-gray-500
+              file:mr-4 file:py-2 file:px-4
+              file:rounded file:border-0
+              file:text-sm file:font-semibold
+              file:bg-blue-50 file:text-blue-700
+              hover:file:bg-blue-100"
+          />
+          {image && (
+            <img
+              src={URL.createObjectURL(image)}
+              alt="Preview"
+              className="mt-4 w-32 h-32 object-cover border rounded"
+            />
+          )}
+        </div>
+
+        {/* Submit */}
         <button
           type="submit"
-          className="add-btn px-6 py-2 bg-black text-white rounded-md w-full sm:w-auto hover:bg-gray-800 focus:outline-none"
+          className="w-full bg-black text-white py-2 rounded hover:bg-gray-800"
         >
-          ADD
+          Submit
         </button>
       </form>
+
+      {/* Message */}
+      {message && (
+        <p className="mt-4 text-center text-sm text-red-600">{message}</p>
+      )}
     </div>
   );
 };

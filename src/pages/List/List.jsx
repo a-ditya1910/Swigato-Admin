@@ -57,8 +57,9 @@ const List = ({ url }) => {
               key={index}
               className="list-table-format grid grid-cols-5 sm:grid-cols-5 items-center gap-4 p-3 border-b border-gray-300 text-sm"
             >
+              {/* Use item.image directly if it's the full URL */}
               <img
-                src={`${url}/images/` + item.image}
+                src={item.image} // Directly use the image URL
                 alt={item.name}
                 className="w-12 h-12 object-cover rounded"
               />
