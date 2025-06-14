@@ -35,7 +35,7 @@ const Add = () => {
     formData.append("image", image);
 
     try {
-      const res = await axios.post("http://localhost:4000/api/food/add", formData, {
+      const res = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/food/add`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
